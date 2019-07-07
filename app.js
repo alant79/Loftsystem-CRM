@@ -167,6 +167,19 @@ app.delete('/api/deleteUser/:id', async (req, res, next) => {
   }
 });
 
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+  const err = new Error('Not Found');
+  err.status = 404;
+  next(err);
+});
+
+// error handler
+app.use(function (err, req, res, next) {
+  res.status(err.status || 500);
+});
+
+
 const server = app.listen(port, function () {
   console.log('Сервер запущен на порте: ' + server.address().port);
 });
