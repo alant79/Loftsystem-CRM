@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
   date: {
@@ -15,5 +15,4 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-
-mongoose.model("New", userSchema);
+mongoose.model('New', userSchema);

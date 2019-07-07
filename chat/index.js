@@ -24,4 +24,3 @@ module.exports.startChat = server => {
     });
   });
 };
-

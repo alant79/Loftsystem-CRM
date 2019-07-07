@@ -6,7 +6,7 @@ const Jimp = require('jimp');
 const jwt = require('jsonwebtoken');
 
 const resultItemConverter = item => {
-  const token = jwt.sign({id:item.id}, 'tasmanianDevil');
+  const token = jwt.sign({ id: item.id }, 'tasmanianDevil');
   return {
     access_token: token,
     firstName: item.firstName,
@@ -25,26 +25,26 @@ exports.getAll = () => new Promise(async (resolve, reject) => {
     let result = await User.find();
 
     resolve(result.map((item) => resultItemConverter(item)));
-  }
-  catch (err) {
+  } catch (err) {
     reject({
+      success: false,
       message: err,
-      statusCode: 500
+      status: 500
     });
   }
 });
 
-exports.add = ( body ) => new Promise(async (resolve, reject) => {
+exports.add = (body) => new Promise(async (resolve, reject) => {
   try {
     const param = JSON.parse(body);
-    const {firstName, middleName, surName, username , password, permission, img} = param;
+    const { firstName, middleName, surName, username, password, img } = param;
     const newUser = new User({
       image: img,
       firstName,
       middleName,
       surName,
       username,
-      permissionId:1,
+      permissionId: 1,
       permission: {
         chat: {
           C: true,
@@ -69,112 +69,137 @@ exports.add = ( body ) => new Promise(async (resolve, reject) => {
     newUser.setPassword(password);
     const result = await newUser.save();
     resolve(resultItemConverter(result));
-  }
-  catch (err) {
-    console.log(err);
-    reject(err);
+  } catch (err) {
+    reject({
+      success: false,
+      message: err,
+      status: 500
+    });
   }
 });
 
-exports.login = ( req, res, next ) => new Promise(async (resolve, reject) => {
+exports.login = (req, res, next) => new Promise(async (resolve, reject) => {
   try {
     const param = JSON.parse(req.body);
     const { username, password, remembered } = param;
     const user = await User.findOne({ username });
     if (!user) {
-      reject('Пользователь и/или пароль некорректны! Авторизация не выполнена!');
+      reject({
+        success: false,
+        message: 'Пользователь и/или пароль некорректны! Авторизация не выполнена!',
+        status: 401
+      });
     }
     if (!user.validPassword(password)) {
-      reject('Пользователь и/или пароль некорректны! Авторизация не выполнена!');
+      reject({
+        success: false,
+        message: 'Пользователь и/или пароль некорректны! Авторизация не выполнена!',
+        status: 401
+      });
     }
     const item = resultItemConverter(user);
     if (remembered) {
       res.cookie('access_token', item.access_token, {
         maxAge: 7 * 60 * 60 * 1000,
         path: '/',
-        httpOnly: true,
+        httpOnly: true
       });
-    };
+    }
     resolve(item);
+  } catch (err) {
+    reject({
+      success: false,
+      message: err,
+      status: 500
+    });
   }
- catch (err) {
-  reject(err);
-}
 });
 
-exports.loginWithToken = ( req, res, next ) => new Promise(async (resolve, reject) => {
+exports.loginWithToken = (req, res, next) => new Promise(async (resolve, reject) => {
   try {
     const param = JSON.parse(req.body);
-    console.log(param);
-    const { username, password } = param;
-    const user = await User.findOne({ username });
+    const id = jwt.decode(param.access_token);
+    const user = await User.findById(id.id);
     if (!user) {
-      reject('Пользователь и/или пароль некорректны! Авторизация не выполнена!');
-    }
-    if (!user.validPassword(password)) {
-      reject('Пользователь и/или пароль некорректны! Авторизация не выполнена!');
+      reject({
+        success: false,
+        message: 'Пользователь и/или пароль некорректны! Авторизация не выполнена!',
+        status: 401
+      });
     }
     resolve(resultItemConverter(user));
+  } catch (err) {
+    reject({
+      success: false,
+      message: err,
+      status: 500
+    });
   }
- catch (err) {
-  reject(err);
-}
 });
 
-exports.update = ( body ) => new Promise(async (resolve, reject) => {
+exports.update = (body) => new Promise(async (resolve, reject) => {
   try {
     const param = JSON.parse(body);
-    const {id, firstName, middleName, surName , password, image } = param;
+    const { id, firstName, middleName, surName, password, image } = param;
 
     const user = await User.findById(id);
 
-    user.set({         
+    user.set({
       firstName: firstName || user.firstName,
       middleName: middleName || user.middleName,
       surName: surName || user.surName,
-      image: image || user.image    
+      image: image || user.image
     });
     if (password) {
       user.setPassword(password);
     }
-    
     const result = await user.save();
 
     resolve(resultItemConverter(result));
-  }
-  catch (err) {
-    reject(err);
+  } catch (err) {
+    reject({
+      success: false,
+      message: err,
+      status: 500
+    });
   }
 });
 
-exports.updateUserPermition = ( body ) => new Promise(async (resolve, reject) => {
+exports.updateUserPermition = (body) => new Promise(async (resolve, reject) => {
   try {
     const param = JSON.parse(body);
     const { permission, permissionId } = param;
 
-    const users = await User.find({permissionId});
-    for(user of users) {
-      user.set({         
+    const users = await User.find({ permissionId });
+    for (let user of users) {
+      user.set({
         permission: {
           chat: permission.chat || user.permission.chat,
           news: permission.news || user.permission.news,
-          setting: permission.setting || user.permission.setting        
-        } 
+          setting: permission.setting || user.permission.setting
+        }
       });
       await user.save();
     }
 
     resolve(users.map((item) => resultItemConverter(item)));
-  }
-  catch (err) {
-    reject(err);
+  } catch (err) {
+    reject({
+      success: false,
+      message: err,
+      status: 500
+    });
   }
 });
 
-exports.savePhoto = ( files ) => new Promise(async (resolve, reject) => {
+exports.savePhoto = (files) => new Promise(async (resolve, reject) => {
   try {
     if (!files || !files.length) {
-      reject('Ошибка чтение картинки с формы');
+      reject({
+        success: false,
+        message: 'Ошибка чтения картинки с формы',
+        status: 500
+      });
     }
     const { fieldname, originalname, buffer } = files[0];
     const uploadDir = path.join(
@@ -185,7 +210,7 @@ exports.savePhoto = ( files ) => new Promise(async (resolve, reject) => {
       'users'
     );
     const arr = originalname.split('.');
-    const type = arr[arr.length-1];
+    const type = arr[arr.length - 1];
 
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir);
@@ -204,43 +229,37 @@ exports.savePhoto = ( files ) => new Promise(async (resolve, reject) => {
     Jimp.read(pathImg, function (err, image) {
       // найти меньшую стороны и по ней уменьшить потом определить качество, если качество не уменьшилось, то уменьшать кго
       if (err) throw err;
-      image.cover(256, 256)           
-           .write(pathImg);
+      image.cover(256, 256)
+        .write(pathImg);
     });
 
-
-    resolve({path: path.join(dir, fieldname + '.' + type)});
-  }
-  catch (err) {
-    reject(err);
-  }
-});
-
-exports.get = ({ id }) => new Promise(async (resolve, reject) => {
-  try {
-    if (!id) {
-      return reject('id is required');
-    }
-
-    const result = await User.findById(id);
-
-    resolve(resultItemConverter(result));
-  }
-  catch (err) {
-    reject(err);
+    resolve({ path: path.join(dir, fieldname + '.' + type) });
+  } catch (err) {
+    reject({
+      success: false,
+      message: err,
+      status: 500
+    });
   }
 });
 
 exports.delete = ({ id }) => new Promise(async (resolve, reject) => {
   try {
     if (!id) {
-      return reject('id is required');
+      return reject({
+        success: false,
+        message: 'Id is required',
+        status: 500
+      });
     }
     await User.findByIdAndRemove(id);
 
     resolve(true);
-  }
-  catch (err) {
-    reject(err);
+  } catch (err) {
+    reject({
+      success: false,
+      message: err,
+      status: 500
+    });
   }
 });

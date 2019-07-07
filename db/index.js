@@ -19,7 +19,7 @@ require('./models/user');
 require('./models/new');
 // Check connection
 db.on('connected', () => {
-  console.log(`Mongoose connection open  on ${connectionURL}`)
+  console.log(`Mongoose connection open  on ${connectionURL}`);
 });
 
 // Check for Db errors
@@ -27,7 +27,7 @@ db.on('error', (err) => console.error(err));
 
 // Check for disconected
 db.on('disconnected', () => {
-  console.log('mongoose connection disconnected')
+  console.log('mongoose connection disconnected');
 });
 
 process.on('SIGINT', () => {

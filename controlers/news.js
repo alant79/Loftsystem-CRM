@@ -23,76 +23,92 @@ const resultItemConverter = item => {
   };
 };
 
-exports.getAll = () => new Promise(async (resolve, reject) => {
-  try {
-    let result = await New.find();
+exports.getAll = () =>
+  new Promise(async (resolve, reject) => {
+    try {
+      let result = await New.find();
 
-    resolve(result.map((item) => resultItemConverter(item)));
-  }
-  catch (err) {
-    reject({
-      message: err,
-      statusCode: 500
-    });
-  }
-});
-
-exports.add = ( body ) => new Promise(async (resolve, reject) => {
-  try {
-    const param = JSON.parse(body);
-    const { date, text, theme, userId } = param;
-    const itemNews = new New({
-      date,
-      text,
-      theme,
-      userId
-    });
-
-    let result = await itemNews.save();
-    result = await New.find();
-
-    resolve(result.map((item) => resultItemConverter(item)));
-  }
-  catch (err) {
-    reject(err);
-  }
-});
-
-exports.update = ( body ) => new Promise(async (resolve, reject) => {
-  try {
-    const param = JSON.parse(body);
-    const { id, text, theme } = param;
-
-    const newItem = await New.findById(id);
-
-    newItem.set({         
-      text: text || newItem.text,
-      theme: theme || newItem.theme
-    });
-    
-    let result = await newItem.save();
-
-    result = await New.find();
-
-    resolve(result.map((item) => resultItemConverter(item)));
-  }
-  catch (err) {
-    reject(err);
-  }
-});
-
-exports.delete = ({ id }) => new Promise(async (resolve, reject) => {
-  try {
-    if (!id) {
-      return reject('id is required');
+      resolve(result.map(item => resultItemConverter(item)));
+    } catch (err) {
+      reject({
+        success: false,
+        message: err,
+        status: 500
+      });
     }
-    await New.findByIdAndRemove(id);
+  });
 
-    const result = await New.find();
+exports.add = body =>
+  new Promise(async (resolve, reject) => {
+    try {
+      const param = JSON.parse(body);
+      const { date, text, theme, userId } = param;
+      const itemNews = new New({
+        date,
+        text,
+        theme,
+        userId
+      });
 
-    resolve(result.map((item) => resultItemConverter(item)));
-  }
-  catch (err) {
-    reject(err);
-  }
-});
+      let result = await itemNews.save();
+      result = await New.find();
+
+      resolve(result.map(item => resultItemConverter(item)));
+    } catch (err) {
+      reject({
+        success: false,
+        message: err,
+        status: 500
+      });
+    }
+  });
+
+exports.update = body =>
+  new Promise(async (resolve, reject) => {
+    try {
+      const param = JSON.parse(body);
+      const { id, text, theme } = param;
+
+      const newItem = await New.findById(id);
+
+      newItem.set({
+        text: text || newItem.text,
+        theme: theme || newItem.theme
+      });
+      let result = await newItem.save();
+
+      result = await New.find();
+
+      resolve(result.map(item => resultItemConverter(item)));
+    } catch (err) {
+      reject({
+        success: false,
+        message: err,
+        status: 500
+      });
+    }
+  });
+
+exports.delete = ({ id }) =>
+  new Promise(async (resolve, reject) => {
+    try {
+      if (!id) {
+        reject({
+          success: false,
+          message: 'id на задано',
+          status: 500
+        });
+      }
+      await New.findByIdAndRemove(id);
+
+      const result = await New.find();
+
+      resolve(result.map(item => resultItemConverter(item)));
+    } catch (err) {
+      reject({
+        success: false,
+        message: err,
+        status: 500
+      });
+    }
+  });
