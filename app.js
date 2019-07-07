@@ -7,7 +7,7 @@ const flash = require('connect-flash');
 const MongoStore = require('connect-mongo')(session);
 require('./db');
 const bodyParser = require('body-parser');
-const port = process.env.NODE_ENV === 'development' ? 3000 : 80;
+const port = process.env.PORT || 3000;
 
 app.locals.basedir = path.join(__dirname, 'views');
 app.use(flash());
