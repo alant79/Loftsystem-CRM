@@ -3,9 +3,12 @@ const config = require('./config.json');
 
 // Use native promises
 mongoose.Promise = global.Promise; // es6 promise
-
-//const connectionURL = `mongodb://${config.db.user}@${config.db.host}:${config.db.port}/${config.db.name}`;
-const connectionURL = 'mongodb+srv://user:qwaszx123@alant-m2ed7.mongodb.net/test?retryWrites=true&w=majority';
+let connectionURL;
+if (process.env.NODE_ENV === 'development') {
+  connectionURL = `mongodb://${config.db.user}@${config.db.host}:${config.db.port}/${config.db.name}`;
+} else {
+  connectionURL = 'mongodb+srv://user:qwaszx123@alant-m2ed7.mongodb.net/test?retryWrites=true&w=majority';
+}
 mongoose.set('useCreateIndex', true);
 
 mongoose.connect(connectionURL, { useNewUrlParser: true })

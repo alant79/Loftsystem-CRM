@@ -1,10 +1,7 @@
-require('dotenv').config();
-const port = process.env.port || 3000;
 const express = require('express');
 const path = require('path');
 const app = express();
 const mongoose = require('mongoose');
-const passport = require('passport');
 const session = require('express-session');
 const flash = require('connect-flash');
 const MongoStore = require('connect-mongo')(session);
@@ -14,13 +11,11 @@ var multer = require('multer');
 var upload = multer();
 const ctrlUsers = require('./controlers/users');
 const ctrlNews = require('./controlers/news');
+const port = process.env.NODE_ENV === 'development' ? 3000 : 80;
 
 app.locals.basedir = path.join(__dirname, 'views');
 app.use(flash());
 app.use(express.static(path.join(__dirname, 'public')));
-require('./config-passport');
-app.use(passport.initialize());
-app.use(passport.session());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.text());
 app.use(
@@ -39,6 +34,7 @@ app.use(
     rolling: true,
   })
 );
+
 app.get('/', function(req, res){
   res.sendFile(path.join(__dirname+'./public/index.html'));
 });
@@ -49,8 +45,11 @@ app.post('/api/saveNewUser', async (req, res) => {
     res.json(result);
   }
   catch (err) {
-    console.log(err);
-  }
+    res.status(400).json({
+      success: false,
+      message: 'Username are already exist'
+  });
+}
 });
 
 app.put('/api/updateUserPermission/:id', async (req, res) => {
@@ -69,6 +68,10 @@ app.post('/api/newNews', async (req, res) => {
     res.json(result);
   }
   catch (err) {
+    res.status(400).json({
+      success: false,
+      message: 'Username are already exist'
+  })
     console.log(err);
   }
 });
@@ -123,6 +126,16 @@ app.post('/api/saveUserImage/:id', upload.any(), async (req, res) => {
   }
 });
 
+app.post('/api/authFromToken', async (req, res, next) => {
+  try {
+    console.log('hhh');
+    const result = await ctrlUsers.loginWithToken(req, res, next);
+    res.json(result);
+  }
+  catch (err) {
+    console.log(err);
+  }
+});
 
 app.post('/api/login', async (req, res, next) => {
   try {
@@ -133,7 +146,6 @@ app.post('/api/login', async (req, res, next) => {
     console.log(err);
   }
 });
-
 
 app.delete('/api/deleteNews/:id', async (req, res, next) => {
   try {
@@ -155,32 +167,23 @@ app.delete('/api/deleteUser/:id', async (req, res, next) => {
   }
 });
 
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+  const err = new Error('Not Found');
+  err.status = 404;
+  next(err);
+});
+
+// error handler
+app.use(function (err, req, res, next) {
+  res.status(err.status || 500);
+});
+
+
 const server = app.listen(port, function () {
   console.log('Сервер запущен на порте: ' + server.address().port);
 });
 
-const io = require('socket.io').listen(server);
+// обработка ошибки
 
-const clients = {};
-
-io.on('connection', socket => {
-  const id = socket.id;
-  const obj = {
-    id,
-    username: socket.request.headers.username
-  }
-  clients[id] = obj;
-
-  socket.json.emit('all users', clients);
-  socket.broadcast.json.emit('new user', obj);
-
-  socket.on('chat message', (message,user) => {
-    console.log( id, user);
-    io.sockets.sockets[user].json.emit('chat message', { message, id });
-  });
-
-  socket.on('disconnect', () => {
-    socket.broadcast.json.emit('delete user', id);
-    delete clients[id];
-  });
-});
+require('./chat').startChat(server);

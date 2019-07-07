@@ -36,9 +36,6 @@ const userSchema = new mongoose.Schema({
   firstName: {
     type: String
   },
-  access_token: {
-    type: String
-  },
   image: {
     type: String
   },
@@ -57,10 +54,6 @@ userSchema.methods.setPassword = function(password) {
 
 userSchema.methods.validPassword = function(password) {
   return bCrypt.compareSync(password, this.hash);
-};
-
-userSchema.methods.setToken = function(access_token) {
-  this.access_token = access_token;
 };
 
 mongoose.model("User", userSchema);

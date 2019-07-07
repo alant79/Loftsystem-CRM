@@ -1,14 +1,14 @@
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
-const uuidv4 = require('uuid/v4');
-const passport = require('passport');
 const fs = require('fs');
 const path = require('path');
 const Jimp = require('jimp');
+const jwt = require('jsonwebtoken');
 
 const resultItemConverter = item => {
+  const token = jwt.sign({id:item.id}, 'tasmanianDevil');
   return {
-    access_token: item.access_token,
+    access_token: token,
     firstName: item.firstName,
     id: item.id,
     image: item.image,
@@ -38,7 +38,6 @@ exports.add = ( body ) => new Promise(async (resolve, reject) => {
   try {
     const param = JSON.parse(body);
     const {firstName, middleName, surName, username , password, permission, img} = param;
-    const token = uuidv4();
     const newUser = new User({
       image: img,
       firstName,
@@ -68,13 +67,11 @@ exports.add = ( body ) => new Promise(async (resolve, reject) => {
       }
     });
     newUser.setPassword(password);
-    newUser.setToken(token);
-
     const result = await newUser.save();
-
     resolve(resultItemConverter(result));
   }
   catch (err) {
+    console.log(err);
     reject(err);
   }
 });
@@ -82,39 +79,46 @@ exports.add = ( body ) => new Promise(async (resolve, reject) => {
 exports.login = ( req, res, next ) => new Promise(async (resolve, reject) => {
   try {
     const param = JSON.parse(req.body);
-    User.findOne({ username: param.username }).then(user => {
-    resolve(resultItemConverter(user));
-  });
-} catch (err) {
+    const { username, password, remembered } = param;
+    const user = await User.findOne({ username });
+    if (!user) {
+      reject('Пользователь и/или пароль некорректны! Авторизация не выполнена!');
+    }
+    if (!user.validPassword(password)) {
+      reject('Пользователь и/или пароль некорректны! Авторизация не выполнена!');
+    }
+    const item = resultItemConverter(user);
+    if (remembered) {
+      res.cookie('access_token', item.access_token, {
+        maxAge: 7 * 60 * 60 * 1000,
+        path: '/',
+        httpOnly: true,
+      });
+    };
+    resolve(item);
+  }
+ catch (err) {
   reject(err);
 }
-  // passport.authenticate('local', function(err, user, info) {
-  //   if (err) {
-  //     reject(next(err));
-  //   }
-  //   if (!user) {
-  //     reject('Пользователь не обнаружен');
-  //   }
-  //   req.login(user, function(err) {
-  //     if (err) {
-  //       reject(next(err));
-  //     }
-  //     if (req.body.remember) {
-  //       const token = uuidv4();
-  //       user.setToken(token);
-  //       user.save().then(user => {
-  //         res.cookie('token', token, {
-  //           maxAge: 7 * 60 * 60 * 1000,
-  //           path: '/',
-  //           httpOnly: true,
-  //         });
-  //         resolve(user);
-  //       });
-  //     } else {
-  //       resolve(user);
-  //     }
-  //   });
-  // })(req, res, next);
+});
+
+exports.loginWithToken = ( req, res, next ) => new Promise(async (resolve, reject) => {
+  try {
+    const param = JSON.parse(req.body);
+    console.log(param);
+    const { username, password } = param;
+    const user = await User.findOne({ username });
+    if (!user) {
+      reject('Пользователь и/или пароль некорректны! Авторизация не выполнена!');
+    }
+    if (!user.validPassword(password)) {
+      reject('Пользователь и/или пароль некорректны! Авторизация не выполнена!');
+    }
+    resolve(resultItemConverter(user));
+  }
+ catch (err) {
+  reject(err);
+}
 });
 
 exports.update = ( body ) => new Promise(async (resolve, reject) => {
@@ -198,9 +202,9 @@ exports.savePhoto = ( files ) => new Promise(async (resolve, reject) => {
       buffer);
 
     Jimp.read(pathImg, function (err, image) {
+      // найти меньшую стороны и по ней уменьшить потом определить качество, если качество не уменьшилось, то уменьшать кго
       if (err) throw err;
-      image.resize(256, 256)
-           .quality(50)                 
+      image.cover(256, 256)           
            .write(pathImg);
     });
 
