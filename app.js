@@ -27,7 +27,8 @@ app.use(
     saveUninitialized: false,
     resave: true,
     ephemeral: true,
-    rolling: true
+    rolling: true,
+    isAuth: false
   })
 );
 require('./router').router(app);
