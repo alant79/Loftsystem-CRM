@@ -4,6 +4,13 @@ const fs = require('fs');
 const path = require('path');
 const Jimp = require('jimp');
 const jwt = require('jsonwebtoken');
+const Joi = require('@hapi/joi');
+const sizeOf = require('image-size');
+
+const schema = Joi.object().keys({
+  username: Joi.string(),
+  password: Joi.string()
+});
 
 const resultItemConverter = item => {
   const token = jwt.sign({ id: item.id }, 'tasmanianDevil');
@@ -38,6 +45,15 @@ exports.add = (body) => new Promise(async (resolve, reject) => {
   try {
     const param = JSON.parse(body);
     const { firstName, middleName, surName, username, password, img } = param;
+    const { error } = Joi.validate({ username, password }, schema);
+    if (error) {
+      console.log('Введены не все поля');
+      return reject({
+        success: false,
+        message: 'Пользователь и/или пароль не заданы! Авторизация не выполнена!',
+        status: 401
+      });
+    }
     const newUser = new User({
       image: img,
       firstName,
@@ -82,6 +98,15 @@ exports.login = (req, res, next) => new Promise(async (resolve, reject) => {
   try {
     const param = JSON.parse(req.body);
     const { username, password, remembered } = param;
+    const { error } = Joi.validate({ username, password }, schema);
+    if (error) {
+      console.log('Введены не все поля');
+      return reject({
+        success: false,
+        message: 'Пользователь и/или пароль не заданы! Авторизация не выполнена!',
+        status: 401
+      });
+    }
     const user = await User.findOne({ username });
     if (!user) {
       reject({
@@ -221,15 +246,15 @@ exports.savePhoto = (files) => new Promise(async (resolve, reject) => {
       'users'
     );
     const pathImg = path.join(uploadDir, fieldname + '.' + type);
+    const dimensions = sizeOf(pathImg);
 
     fs.writeFileSync(
       pathImg,
       buffer);
-
+    const minSize = Math.min(dimensions.width, dimensions.height);
     Jimp.read(pathImg, function (err, image) {
-      // найти меньшую стороны и по ней уменьшить потом определить качество, если качество не уменьшилось, то уменьшать кго
       if (err) throw err;
-      image.cover(256, 256)
+      image.cover(minSize, minSize)
         .write(pathImg);
     });
 
