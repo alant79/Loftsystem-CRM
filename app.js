@@ -27,10 +27,42 @@ app.use(
     saveUninitialized: false,
     resave: true,
     ephemeral: true,
-    rolling: true
+    rolling: true,
+    isAuth: false
   })
 );
-require('./router').router(app);
+
+app.use(function (req, res, next) {
+  let securedPathes = [];
+  securedPathes.push('/api/saveNewUser');
+  securedPathes.push('/api/updateUserPermission/:id');
+  securedPathes.push('/api/newNews');
+  securedPathes.push('/api/getUsers');
+  securedPathes.push('/api/getNews');
+  securedPathes.push('/api/updateUser/:id');
+  securedPathes.push('/api/updateNews/:id');
+  securedPathes.push('/api/saveUserImage/:id');
+  securedPathes.push('/api/deleteNews/:id');
+  securedPathes.push('/api/deleteUser/:id');
+  if (
+    securedPathes.includes(req.path) &&
+    !req.session.isAuth
+  ) {
+    res.json({
+      success: false,
+      message:
+        'Пользователь и/или пароль не заданы! Авторизация не выполнена!',
+      status: 401
+    });
+  }
+  next();
+});
+
+app.get('/', function (req, res) {
+  res.sendFile(path.join(__dirname, 'public/index.html'));
+});
+
+app.use('/api', require('./router'));
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   const err = new Error('Not Found');
