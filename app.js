@@ -31,7 +31,18 @@ app.use(
     isAuth: false
   })
 );
-require('./router').router(app);
+
+app.use(function (req, res, next) {
+  if (
+    !(req.path === '/api/login' || req.path === '/api/authFromToken') &&
+    !req.session.isAuth
+  ) {
+    res.redirect('/');
+  }
+  next();
+});
+
+app.use('/', require('./router'));
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   const err = new Error('Not Found');

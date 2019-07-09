@@ -10,7 +10,6 @@ module.exports = (req, res, next) =>
   new Promise(async (resolve, reject) => {
     try {
       const param = JSON.parse(req.body);
-      console.log(param);
       const { username, password, remembered } = param;
       const { error } = Joi.validate({ username, password }, schema);
       if (error) {
