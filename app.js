@@ -33,11 +33,27 @@ app.use(
 );
 
 app.use(function (req, res, next) {
+  let securedPathes = [];
+  securedPathes.push('/api/saveNewUser');
+  securedPathes.push('/api/updateUserPermission/:id');
+  securedPathes.push('/api/newNews');
+  securedPathes.push('/api/getUsers');
+  securedPathes.push('/api/getNews');
+  securedPathes.push('/api/updateUser/:id');
+  securedPathes.push('/api/updateNews/:id');
+  securedPathes.push('/api/saveUserImage/:id');
+  securedPathes.push('/api/deleteNews/:id');
+  securedPathes.push('/api/deleteUser/:id');
   if (
-    !(req.path === '/api/login' || req.path === '/api/authFromToken') &&
+    securedPathes.includes(req.path) &&
     !req.session.isAuth
   ) {
-    res.redirect('/');
+    res.json({
+      success: false,
+      message:
+        'Пользователь и/или пароль не заданы! Авторизация не выполнена!',
+      status: 401
+    });
   }
   next();
 });
