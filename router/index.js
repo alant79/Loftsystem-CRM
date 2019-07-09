@@ -3,12 +3,7 @@ const multer = require('multer');
 const upload = multer();
 const ctrlUsers = require('../controlers/users');
 const ctrlNews = require('../controlers/news');
-const path = require('path');
 const router = express.Router();
-
-router.get('/', function (req, res) {
-  res.sendFile(path.join(__dirname, 'public/index.html'));
-});
 
 router.post('/api/saveNewUser', async (req, res) => {
   try {

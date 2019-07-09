@@ -58,7 +58,11 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.use('/', require('./router'));
+app.get('/', function (req, res) {
+  res.sendFile(path.join(__dirname, 'public/index.html'));
+});
+
+app.use('/api', require('./router'));
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   const err = new Error('Not Found');
