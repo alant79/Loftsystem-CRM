@@ -5,7 +5,7 @@ const ctrlUsers = require('../controlers/users');
 const ctrlNews = require('../controlers/news');
 const router = express.Router();
 
-router.post('/api/saveNewUser', async (req, res) => {
+router.post('/saveNewUser', async (req, res) => {
   try {
     const result = await ctrlUsers.add(req.body);
     res.json(result);
@@ -14,7 +14,7 @@ router.post('/api/saveNewUser', async (req, res) => {
   }
 });
 
-router.put('/api/updateUserPermission/:id', async (req, res) => {
+router.put('/updateUserPermission/:id', async (req, res) => {
   try {
     const result = await ctrlUsers.updateUserPermition(req.body);
     res.json(result);
@@ -23,7 +23,7 @@ router.put('/api/updateUserPermission/:id', async (req, res) => {
   }
 });
 
-router.post('/api/newNews', async (req, res) => {
+router.post('/newNews', async (req, res) => {
   try {
     const result = await ctrlNews.add(req.body);
     res.json(result);
@@ -36,7 +36,7 @@ router.post('/api/newNews', async (req, res) => {
   }
 });
 
-router.get('/api/getUsers', async (req, res) => {
+router.get('/getUsers', async (req, res) => {
   try {
     const result = await ctrlUsers.getAll();
     res.json(result);
@@ -45,7 +45,7 @@ router.get('/api/getUsers', async (req, res) => {
   }
 });
 
-router.get('/api/getNews', async (req, res) => {
+router.get('/getNews', async (req, res) => {
   try {
     const result = await ctrlNews.getAll();
     res.json(result);
@@ -54,7 +54,7 @@ router.get('/api/getNews', async (req, res) => {
   }
 });
 
-router.put('/api/updateUser/:id', async (req, res) => {
+router.put('/updateUser/:id', async (req, res) => {
   try {
     const result = await ctrlUsers.update(req.body);
     res.json(result);
@@ -63,7 +63,7 @@ router.put('/api/updateUser/:id', async (req, res) => {
   }
 });
 
-router.put('/api/updateNews/:id', async (req, res) => {
+router.put('/updateNews/:id', async (req, res) => {
   try {
     const result = await ctrlNews.update(req.body);
     res.json(result);
@@ -72,7 +72,7 @@ router.put('/api/updateNews/:id', async (req, res) => {
   }
 });
 
-router.post('/api/saveUserImage/:id', upload.any(), async (req, res) => {
+router.post('/saveUserImage/:id', upload.any(), async (req, res) => {
   try {
     const result = await ctrlUsers.savePhoto(req.files);
     res.json(result);
@@ -81,7 +81,7 @@ router.post('/api/saveUserImage/:id', upload.any(), async (req, res) => {
   }
 });
 
-router.post('/api/authFromToken', async (req, res, next) => {
+router.post('/authFromToken', async (req, res, next) => {
   try {
     const result = await ctrlUsers.loginWithToken(req, res, next);
     req.session.isAuth = true;
@@ -91,7 +91,7 @@ router.post('/api/authFromToken', async (req, res, next) => {
   }
 });
 
-router.post('/api/login', async (req, res, next) => {
+router.post('/login', async (req, res, next) => {
   try {
     const result = await ctrlUsers.login(req, res, next);
     req.session.isAuth = true;
@@ -101,7 +101,7 @@ router.post('/api/login', async (req, res, next) => {
   }
 });
 
-router.delete('/api/deleteNews/:id', async (req, res, next) => {
+router.delete('/deleteNews/:id', async (req, res, next) => {
   try {
     const result = await ctrlNews.delete(req.params);
     res.json(result);
@@ -110,7 +110,7 @@ router.delete('/api/deleteNews/:id', async (req, res, next) => {
   }
 });
 
-router.delete('/api/deleteUser/:id', async (req, res, next) => {
+router.delete('/deleteUser/:id', async (req, res, next) => {
   try {
     const result = await ctrlUsers.delete(req.params);
     res.json(result);
