@@ -1,4 +1,5 @@
 const express = require('express');
+var compression = require('compression');
 const path = require('path');
 const app = express();
 const mongoose = require('mongoose');
@@ -6,10 +7,12 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const MongoStore = require('connect-mongo')(session);
 require('./db');
+require('./mc');
 const bodyParser = require('body-parser');
 const port = process.env.PORT || 3000;
 
 app.locals.basedir = path.join(__dirname, 'views');
+app.use(compression());
 app.use(flash());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: false }));
